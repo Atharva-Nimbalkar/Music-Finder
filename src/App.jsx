@@ -4,28 +4,97 @@ import { useState } from 'react';
 import './App.css'
 import {useEffect} from 'react';
 import { FormControl, InputGroup, Container, Button } from "react-bootstrap";
-const clientId=import.meta.env.VITE_ClIENT_ID;
-const clientSecret=import.meta.env.VITE_CLINET_SECRET;
+const clientId=import.meta.env.VITE_CLIENT_ID;
+const clientSecret=import.meta.env.VITE_CLIENT_SECRET;
 
 function App() {
-  
+
   const [searchInput,setSearchInput]=useState('');
   const [accessToken,setAccessToken]=useState('');
+  const [error, setError] = useState('');
 
+
+  //  POST request to the Spotify API to obtain an access token using client credentials authentication.
+// Set the access token in the component's state
   useEffect(()=>{
-    let authParams={
-      method:"POST",
-      headers:{
-        "Content-Type":"application/x-www-form-urlencoded",
-      },
-      body:
-      "grant_type=client_credentials&client_id="+clientId+"&client_secret="+clientSecret
+    const fetchAccessToken=async()=>{
+      const authParams = {
+        method: 'POST',
+        /*  This header indicates to the server that the data being sent in the request body is formatted as URL-encoded key-value pairs, which is a common format
+      for submitting form data over HTTP. This is necessary for the Spotify API to correctly
+      interpret and process the data being sent in the request body during the authentication
+      process. */
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        /* The `body` property in the `authParams` object is specifying the data that will be sent in the
+     request body when making a POST request to the Spotify API endpoint for token authentication. */
+        body: `grant_type=client_credentials&client_id=${clientId}&client_secret=${clientSecret}`,
+      };
+    
+      try {
+        const response = await fetch('https://accounts.spotify.com/api/token', authParams);
+        if (!response.ok) {
+          throw new Error(`Failed to get access token: ${response.statusText}`);
+        }
+        const data = await response.json();
+        setAccessToken(data.access_token);
+        // console.log('Access Token:', data.access_token); // Log Access Token
+      } catch (error) {
+        setError(error.message);
+        console.error('Error fetching access token:', error);
+      }
     };
 
-    fetch("https://accounts.spotify.com/api/token",authParams)
-    .then((result)=>result.json())
-    .then((data)=>{setAccessToken(data.access_token);});
-  },[]);
+    fetchAccessToken();
+
+    
+
+    },[]);
+
+    const search = async () => {
+      if (!accessToken) {
+        setError('Access token is not available.');
+        return;
+      }
+
+      const artistParams = {
+        method: 'GET',
+        /*. By including this access token in the Authorization header with the prefix "Bearer ", the request is being authorized
+to access protected resources on the Spotify API server on behalf of the authenticated user or
+client. This is a common practice in API authentication where the access token is sent in the
+Authorization header to validate and authorize the request. */
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+      };
+
+      try{
+        // Get Artist Id
+        const artistResponse = await fetch(`https://api.spotify.com/v1/search?q=${searchInput}&type=artist`, artistParams);
+        if (!artistResponse.ok) {
+          throw new Error(`Search request failed: ${artistResponse.statusText}`);
+        }
+        const artistData = await artistResponse.json();
+        console.log('Artist Data:', artistData); // Log artist data response
+        const artistID = artistData.artists.items[0]?.id;
+        // console.log("Artist ID: "+artistID);
+        if (!artistID) {
+          throw new Error('No artist found.');
+        }
+
+      
+    } catch (error) {
+      setError(error.message);
+      console.error('Error during search:', error);
+    }
+
+  
+  // console.log("Search Input: "+searchInput);
+
+
+  };
 
   return (
    <>
@@ -43,8 +112,12 @@ context, the `<InputGroup>` component is being used to wrap the `<FormControl>` 
         placeholder="Search For Artist"
         type="input"
         aria-label="Search for an Artist"
-        // onKeyDown={} // search function
-        // onChange={} // setSearch
+        onKeyDown={(event)=>{
+          if(event.key==="Enter"){
+            search();
+          }
+        }} // search function
+        onChange={(event)=>setSearchInput(event.target.value)} // setSearch
         style={{
           width: "300px",
           height: "35px",
@@ -56,8 +129,9 @@ context, the `<InputGroup>` component is being used to wrap the `<FormControl>` 
         }}
       />
 
-       <Button onClick={{}}>Search</Button>
+       <Button onClick={search}>Search</Button>
       </InputGroup>
+      {error && <p style={{ color: 'red' }}>{error}</p>}
     </Container>
     </>
   )
