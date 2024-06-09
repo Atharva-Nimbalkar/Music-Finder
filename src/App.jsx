@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import './App.css'
 import {useEffect} from 'react';
-import { FormControl, InputGroup, Container, Button } from "react-bootstrap";
+import { FormControl, InputGroup, Container, Button,Row,Card } from "react-bootstrap";
 const clientId=import.meta.env.VITE_CLIENT_ID;
 const clientSecret=import.meta.env.VITE_CLIENT_SECRET;
 
@@ -147,6 +147,77 @@ context, the `<InputGroup>` component is being used to wrap the `<FormControl>` 
       </InputGroup>
       {error && <p style={{ color: 'red' }}>{error}</p>}
     </Container>
+{/* TO display the album data fetched from the Spotify API. 
+ */}
+    <Container>
+      <Row
+        style={{
+          display: "flex",
+          flexDirection: "row",
+          flexWrap: "wrap",
+          justifyContent: "center",
+          alignContent: "center",
+        }}
+      >
+        {albums.map((album) => {
+            return (
+              <Card
+                key={album.id}
+                style={{
+                  backgroundColor: "white",
+                  margin: "10px",
+                  borderRadius: "5px",
+                  marginBottom: "30px",
+                }}
+              >
+                <Card.Img
+                  width={200}
+                  src={album.images[0].url}
+                  style={{
+                    borderRadius: "4%",
+                  }}
+                />
+                <Card.Body>
+                  <Card.Title
+                    style={{
+                      whiteSpace: "wrap",
+                      fontWeight: "bold",
+                      maxWidth: "200px",
+                      fontSize: "18px",
+                      marginTop: "10px",
+                      color: "black",
+                    }}
+                  >
+                    {album.name}
+                  </Card.Title>
+                  <Card.Text
+                    style={{
+                      color: "black",
+                    }}
+                  >
+                    Release Date: <br /> {album.release_date}
+                  </Card.Text>
+                  <Button
+                    href={album.external_urls.spotify}
+                    style={{
+                      backgroundColor: "black",
+                      color: "white",
+                      fontWeight: "bold",
+                      fontSize: "15px",
+                      borderRadius: "5px",
+                      padding: "10px",
+                    }}
+                  >
+                    Album Link
+                  </Button>
+                </Card.Body>
+              </Card>
+            );
+          })}
+
+      </Row>
+    </Container>
+
     </>
   )
 }
