@@ -12,7 +12,7 @@ function App() {
   const [searchInput,setSearchInput]=useState('');
   const [accessToken,setAccessToken]=useState('');
   const [error, setError] = useState('');
-
+  const [albums,setAlbums]=useState([]);
 
   //  POST request to the Spotify API to obtain an access token using client credentials authentication.
 // Set the access token in the component's state
@@ -83,6 +83,20 @@ Authorization header to validate and authorize the request. */
         if (!artistID) {
           throw new Error('No artist found.');
         }
+        // Get Artist Albums
+  const albumsResponse = await fetch(
+    `https://api.spotify.com/v1/artists/${artistID}/albums?include_groups=album&market=US&limit=50`,
+    artistParams
+  );
+  if (!albumsResponse.ok) {
+    throw new Error(`Albums request failed: ${albumsResponse.statusText}`);
+  }
+  const albumsData = await albumsResponse.json();
+  setAlbums(albumsData.items);
+
+  console.log('Search Input:', searchInput);
+  console.log('Artist ID:', artistID);
+  console.log('Albums:', albumsData.items); // Log albums response
 
       
     } catch (error) {
